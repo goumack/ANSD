@@ -12,13 +12,13 @@ col1, col2 = st.columns([1, 8])
 with col1:
     st.image("senegal icone.jpg", width=50)
 with col2:
-    st.title("📊 Application de Prévision par Région")
+    st.title(" Application de Prévision par Région")
 
 # Texte descriptif sous le titre
 st.markdown(
     """
     ### Prévision de l'évolution de la population du Sénégal par région  
-    *en utilisant le Deep Learning (Temporal Convolutional Neural Network)*  
+    *en utilisant le Deep Learning (Temporal Convolutional Neural Network) - ACCEL 2025*  
     """
 )
 
@@ -104,7 +104,7 @@ def predict_for_region(region_name):
         st.error(f"Erreur lors de la prédiction pour {region_name} : {e}")
         return region_df, None
 
-with st.spinner("⏳ Calcul des prévisions..."):
+with st.spinner(" Calcul des prévisions..."):
     fig, ax = plt.subplots(figsize=(12, 6))
     
     for region in selected_regions:
