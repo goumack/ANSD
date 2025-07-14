@@ -22,13 +22,13 @@ st.markdown(
 )
 
 # === ONGLET PRINCIPAL ===
-tab1, tab2, tab3 = st.tabs(["📈 Population", "🏢 Structure nombre", "📊 Prévision temporelle"])
+tab1, tab2, tab3 = st.tabs([" Population", " Structure nombre", " Prévision temporelle"])
 
 # ==================================================================================
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
 # ==================================================================================
 with tab1:
-    st.subheader("📈 Prévision de la Population par Région")
+    st.subheader(" Prévision de la Population par Région")
     
     API_URL = "https://ansdpoc1-dgid.apps.ocp.heritage.africa/v2/models/ansdpoc1/infer"
 
@@ -123,7 +123,7 @@ with tab1:
 # === TAB 2 : STRUCTURE NOMBRE =====================================================
 # ==================================================================================
 with tab2:
-    st.subheader("🏢 Structure Nombre")
+    st.subheader(" Structure Nombre")
 
     SEQ_LENGTH2 = 10
     DATA_PATH2 = "couverturedf2.csv"
@@ -195,7 +195,7 @@ with tab2:
 # === TAB 3 : PRÉVISION TEMPORELLE ================================================
 # ==================================================================================
 with tab3:
-    st.subheader("📊 Prévision Temporelle par Région")
+    st.subheader(" Prévision Temporelle par Région")
 
     SEQ_LENGTH3 = 10
     DATA_PATH3 = "couverturedf1.csv"
