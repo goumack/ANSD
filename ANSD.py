@@ -179,7 +179,6 @@ with tab2:
 
     try:
         df_pred2 = predict_struct(scaled2, scaler2, region_map2[region_selected2])
-        st.dataframe(df_pred2)
         fig2, ax2 = plt.subplots(figsize=(10, 5))
         ax2.plot(df_pred2['Année'], df_pred2['Prédiction (valeur)'], marker="x", linestyle="--", label="Prédiction")
         ax2.set_title(f"Structure nombre - {region_selected2}")
@@ -188,6 +187,8 @@ with tab2:
         ax2.grid()
         ax2.legend()
         st.pyplot(fig2)
+        st.dataframe(df_pred2)
+
     except Exception as e:
         st.error(f"Erreur de prédiction : {e}")
 
@@ -252,7 +253,6 @@ with tab3:
 
     try:
         df_pred3 = predict_temporelle(scaled3, scaler3, region_map3[region_selected3])
-        st.dataframe(df_pred3)
         fig3, ax3 = plt.subplots(figsize=(10, 5))
         ax3.plot(df_pred3['Année'], df_pred3['Prédiction (valeur)'], marker="x", linestyle="--", label="Prédiction")
         ax3.set_title(f"Prévision temporelle - {region_selected3}")
@@ -261,5 +261,7 @@ with tab3:
         ax3.grid()
         ax3.legend()
         st.pyplot(fig3)
+        st.dataframe(df_pred3)
+
     except Exception as e:
         st.error(f"Erreur de prédiction : {e}")
