@@ -22,7 +22,12 @@ st.markdown(
 )
 
 # === ONGLET PRINCIPAL ===
-tab1, tab2, tab3 = st.tabs([" Population", " Structure nombre", " Prévision temporelle"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    " Population", 
+    " Structure nombre", 
+    " Prévision temporelle",
+    " Recommandation OMVS"
+])
 
 # ==================================================================================
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
@@ -56,7 +61,7 @@ with tab1:
         st.warning("Veuillez sélectionner au moins une région.")
         st.stop()
 
-    def predict_for_region(region_name):
+    def predict_for_region(region_name, start=start_year, end=end_year):
         region_df = df[df['region'] == region_name]
         if region_df.empty:
             st.warning(f"Aucune donnée pour {region_name}")
@@ -71,7 +76,7 @@ with tab1:
         predictions = []
 
         try:
-            for year in range(start_year, end_year + 1):
+            for year in range(start, end + 1):
                 payload = {
                     "inputs": [
                         {
@@ -265,3 +270,53 @@ with tab3:
 
     except Exception as e:
         st.error(f"Erreur de prédiction : {e}")
+
+# ==================================================================================
+# === TAB 4 : RECOMMANDATION OMVS ==================================================
+# ==================================================================================
+with tab4:
+    st.subheader(" Recommandation OMVS par Région")
+    st.markdown("""
+        **Méthode :**  
+        Nombre de structures recommandées = Population prédite / 150 000  
+        (selon la norme OMS)
+    """)
+
+    region_selected_omvs = st.selectbox(
+        "Sélectionnez une région", 
+        sorted(df['region'].unique()), 
+        key="region_omvs"
+    )
+    start_year_omvs = st.number_input(
+        "Année de début", min_value=2024, max_value=2100, value=2025, key="start_omvs"
+    )
+    end_year_omvs = st.number_input(
+        "Année de fin", min_value=start_year_omvs, max_value=2100, value=2030, key="end_omvs"
+    )
+
+    _, df_pred_omvs = predict_for_region(region_selected_omvs, start=start_year_omvs, end=end_year_omvs)
+ # ...existing code...
+# ...existing code...
+# ...existing code...
+if df_pred_omvs is not None:
+    # Arrondir en excès (vers le haut) le nombre de structures recommandées (entiers)
+    df_pred_omvs["Structures recommandées"] = np.ceil(df_pred_omvs["Prédiction (valeur)"] / 150_000).astype(int)
+
+    fig_omvs, ax_omvs = plt.subplots(figsize=(10, 5))
+    ax_omvs.plot(
+        df_pred_omvs["Année"], 
+        df_pred_omvs["Structures recommandées"], 
+        marker="o", linestyle="-", color="green", label="Structures recommandées"
+    )
+    ax_omvs.set_title(f"Structures recommandées par OMS - {region_selected_omvs}")
+    ax_omvs.set_xlabel("Année")
+    ax_omvs.set_ylabel("Nombre de structures")
+    ax_omvs.grid()
+    ax_omvs.legend()
+    # Afficher uniquement des entiers sur l'axe des ordonnées
+    ax_omvs.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+    st.pyplot(fig_omvs)
+    st.dataframe(df_pred_omvs[["Année", "Structures recommandées"]])
+else:
+    st.warning("Impossible de calculer la recommandation pour cette region.")
+# ...existing code...
