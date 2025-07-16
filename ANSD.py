@@ -24,16 +24,16 @@ st.markdown(
 # === ONGLET PRINCIPAL ===
 tab1, tab2, tab3, tab4 = st.tabs([
     " Population", 
-    " Structure nombre", 
-    " Prévision temporelle",
-    " Recommandation OMS"
+    " Nombre d'hopitaux", 
+    " Nombre d'habitant par hopital",
+    " Nombre d'habitant par hopital (Norme OMS)"
 ])
 
 # ==================================================================================
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
 # ==================================================================================
 with tab1:
-    st.subheader(" Prévision de la Population par Région")
+    st.subheader(" Population & Couverture sanitaire")
     
     API_URL = "https://ansdpoc1-dgid.apps.ocp.heritage.africa/v2/models/ansdpoc1/infer"
 
@@ -132,7 +132,7 @@ with tab1:
 # === TAB 2 : STRUCTURE NOMBRE =====================================================
 # ==================================================================================
 with tab2:
-    st.subheader(" Structure Nombre")
+    st.subheader(" Nombre d'hopitaux")
 
     SEQ_LENGTH2 = 10
     DATA_PATH2 = "couverturedf2.csv"
@@ -223,7 +223,7 @@ with tab2:
 # === TAB 3 : PRÉVISION TEMPORELLE ================================================
 # ==================================================================================
 with tab3:
-    st.subheader(" Prévision Temporelle par Région")
+    st.subheader(" Nombre d'habitant par hopital")
 
     SEQ_LENGTH3 = 10
     DATA_PATH3 = "couverturedf1.csv"
@@ -314,7 +314,7 @@ with tab3:
 # === TAB 4 : RECOMMANDATION OMVS ==================================================
 # ==================================================================================
 with tab4:
-    st.subheader(" Recommandation OMS par Région")
+    st.subheader(" Recommandation OMS")
     st.markdown("""
         **Méthode :**  
         Nombre de structures recommandées = Population prédite / 150 000  
