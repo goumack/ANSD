@@ -16,8 +16,8 @@ with col2:
 
 st.markdown(
     """
-    ### Prévisions de l'évolution au Sénégal par région  
-    *avec des modèles de Deep Learning - ACCEL 2025*
+    ### Population & Couverture sanitaire 
+    *ACCEL 2025*
     """
 )
 
@@ -33,7 +33,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
 # ==================================================================================
 with tab1:
-    st.subheader(" Population & Couverture sanitaire")
+    st.subheader("Prévision de la Population par Région")
     
     API_URL = "https://ansdpoc1-dgid.apps.ocp.heritage.africa/v2/models/ansdpoc1/infer"
 
