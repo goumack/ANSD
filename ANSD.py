@@ -26,7 +26,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     " Population", 
     " Structure nombre", 
     " Prévision temporelle",
-    " Recommandation OMVS"
+    " Recommandation OMS"
 ])
 
 # ==================================================================================
@@ -71,6 +71,10 @@ with tab1:
         scaler = MinMaxScaler()
         scaled_values = scaler.fit_transform(region_df['value'].values.reshape(-1, 1)).flatten()
         region_code = {region: idx for idx, region in enumerate(regions)}[region_name]
+
+        if len(scaled_values) < seq_length:
+            st.error(f"Pas assez de données historiques pour {region_name} (au moins {seq_length} valeurs nécessaires, {len(scaled_values)} trouvées).")
+            return region_df, None
 
         input_seq = scaled_values[-seq_length:].astype(np.float32).reshape(1, seq_length)
         predictions = []
@@ -150,6 +154,9 @@ with tab2:
     end_year2 = st.number_input("Année de fin", start_year2, 2100, 2030, key="end_struct")
 
     def predict_struct(scaled_values, scaler, region_code):
+        if len(scaled_values) < SEQ_LENGTH2:
+            st.error(f"Pas assez de données historiques pour cette région (au moins {SEQ_LENGTH2} valeurs nécessaires, {len(scaled_values)} trouvées).")
+            return pd.DataFrame(columns=["Année", "Prédiction (valeur)"])
         input_seq = scaled_values[-SEQ_LENGTH2:].astype(np.float32).reshape(1, SEQ_LENGTH2)
         predictions = []
         for year in range(start_year2, end_year2 + 1):
@@ -184,16 +191,31 @@ with tab2:
 
     try:
         df_pred2 = predict_struct(scaled2, scaler2, region_map2[region_selected2])
-        fig2, ax2 = plt.subplots(figsize=(10, 5))
-        ax2.plot(df_pred2['Année'], df_pred2['Prédiction (valeur)'], marker="x", linestyle="--", label="Prédiction")
-        ax2.set_title(f"Structure nombre - {region_selected2}")
-        ax2.set_xlabel("Année")
-        ax2.set_ylabel("Valeur")
-        ax2.grid()
-        ax2.legend()
-        st.pyplot(fig2)
-        st.dataframe(df_pred2)
-
+        if df_pred2.empty:
+            st.info("Aucune prévision possible pour cette région (données insuffisantes).")
+        else:
+            y_values_struct = np.ceil(df_pred2['Prédiction (valeur)']).clip(lower=0).astype(int)
+            fig2, ax2 = plt.subplots(figsize=(10, 5))
+            ax2.plot(
+                df_pred2['Année'],
+                y_values_struct,
+                marker="o",
+                markersize=8,
+                linestyle="--",
+                color="tab:blue",
+                label="Prédiction"
+            )
+            ax2.set_title(f"Structure nombre - {region_selected2}")
+            ax2.set_xlabel("Année")
+            ax2.set_ylabel("Valeur")
+            ax2.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            y_max = y_values_struct.max() if len(y_values_struct) > 0 else 1
+            ax2.set_ylim(bottom=0, top=y_max + max(2, int(0.1 * y_max)))
+            ax2.grid()
+            ax2.legend()
+            st.pyplot(fig2)
+            df_pred2["Prédiction (valeur)"] = y_values_struct
+            st.dataframe(df_pred2)
     except Exception as e:
         st.error(f"Erreur de prédiction : {e}")
 
@@ -224,6 +246,9 @@ with tab3:
     end_year3 = st.number_input("Année de fin", start_year3, 2100, 2030, key="end_temp")
 
     def predict_temporelle(scaled_values, scaler, region_code):
+        if len(scaled_values) < SEQ_LENGTH3:
+            st.error(f"Pas assez de données historiques pour cette région (au moins {SEQ_LENGTH3} valeurs nécessaires, {len(scaled_values)} trouvées).")
+            return pd.DataFrame(columns=["Année", "Prédiction (valeur)"])
         input_seq = scaled_values[-SEQ_LENGTH3:].astype(np.float32).reshape(1, SEQ_LENGTH3)
         predictions = []
         for year in range(start_year3, end_year3 + 1):
@@ -258,16 +283,30 @@ with tab3:
 
     try:
         df_pred3 = predict_temporelle(scaled3, scaler3, region_map3[region_selected3])
-        fig3, ax3 = plt.subplots(figsize=(10, 5))
-        ax3.plot(df_pred3['Année'], df_pred3['Prédiction (valeur)'], marker="x", linestyle="--", label="Prédiction")
-        ax3.set_title(f"Prévision temporelle - {region_selected3}")
-        ax3.set_xlabel("Année")
-        ax3.set_ylabel("Valeur")
-        ax3.grid()
-        ax3.legend()
-        st.pyplot(fig3)
-        st.dataframe(df_pred3)
-
+        if df_pred3.empty:
+            st.info("Aucune prévision possible pour cette région (données insuffisantes).")
+        else:
+            y_values_temp = np.ceil(df_pred3['Prédiction (valeur)']).clip(lower=0).astype(int)
+            fig3, ax3 = plt.subplots(figsize=(10, 5))
+            ax3.plot(
+                df_pred3['Année'],
+                y_values_temp,
+                marker="o",
+                markersize=8,
+                linestyle="--",
+                color="tab:orange",
+                label="Prédiction"
+            )
+            ax3.set_title(f"Prévision temporelle - {region_selected3}")
+            ax3.set_xlabel("Année")
+            ax3.set_ylabel("Valeur")
+            ax3.set_ylim(bottom=0, top=y_values_temp.max() + max(2, int(0.1 * y_values_temp.max())))
+            ax3.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            ax3.grid()
+            ax3.legend()
+            st.pyplot(fig3)
+            df_pred3["Prédiction (valeur)"] = y_values_temp
+            st.dataframe(df_pred3)
     except Exception as e:
         st.error(f"Erreur de prédiction : {e}")
 
@@ -275,7 +314,7 @@ with tab3:
 # === TAB 4 : RECOMMANDATION OMVS ==================================================
 # ==================================================================================
 with tab4:
-    st.subheader(" Recommandation OMVS par Région")
+    st.subheader(" Recommandation OMS par Région")
     st.markdown("""
         **Méthode :**  
         Nombre de structures recommandées = Population prédite / 150 000  
@@ -295,28 +334,44 @@ with tab4:
     )
 
     _, df_pred_omvs = predict_for_region(region_selected_omvs, start=start_year_omvs, end=end_year_omvs)
- # ...existing code...
-# ...existing code...
-# ...existing code...
-if df_pred_omvs is not None:
-    # Arrondir en excès (vers le haut) le nombre de structures recommandées (entiers)
-    df_pred_omvs["Structures recommandées"] = np.ceil(df_pred_omvs["Prédiction (valeur)"] / 150_000).astype(int)
+    if df_pred_omvs is not None:
+        df_pred_omvs["Structures recommandées"] = np.ceil(df_pred_omvs["Prédiction (valeur)"] / 150_000).clip(lower=0).astype(int)
+        y_values = df_pred_omvs["Structures recommandées"].astype(int)
 
-    fig_omvs, ax_omvs = plt.subplots(figsize=(10, 5))
-    ax_omvs.plot(
-        df_pred_omvs["Année"], 
-        df_pred_omvs["Structures recommandées"], 
-        marker="o", linestyle="-", color="green", label="Structures recommandées"
-    )
-    ax_omvs.set_title(f"Structures recommandées par OMS - {region_selected_omvs}")
-    ax_omvs.set_xlabel("Année")
-    ax_omvs.set_ylabel("Nombre de structures")
-    ax_omvs.grid()
-    ax_omvs.legend()
-    # Afficher uniquement des entiers sur l'axe des ordonnées
-    ax_omvs.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
-    st.pyplot(fig_omvs)
-    st.dataframe(df_pred_omvs[["Année", "Structures recommandées"]])
-else:
-    st.warning("Impossible de calculer la recommandation pour cette region.")
-# ...existing code...
+        region_df_struct = df_struct[df_struct['region'] == region_selected_omvs]
+        scaler_struct = MinMaxScaler()
+        scaled_struct = scaler_struct.fit_transform(region_df_struct['value'].values.reshape(-1, 1)).flatten()
+        df_pred_struct = predict_struct(scaled_struct, scaler_struct, region_map2[region_selected_omvs])
+        if df_pred_struct.empty:
+            st.info("Aucune prévision de structures existantes possible pour cette région (données insuffisantes).")
+        else:
+            df_pred_struct["Structures existantes"] = np.ceil(df_pred_struct["Prédiction (valeur)"]).clip(lower=0).astype(int)
+            df_pred_struct = df_pred_struct[["Année", "Structures existantes"]]
+
+            df_pred_omvs = pd.merge(df_pred_omvs, df_pred_struct, on="Année", how="left")
+            df_pred_omvs["Structures existantes"] = df_pred_omvs["Structures existantes"].fillna(0).astype(int)
+            df_pred_omvs["À ajouter"] = (df_pred_omvs["Structures recommandées"] - df_pred_omvs["Structures existantes"]).clip(lower=0).astype(int)
+
+            fig_omvs, ax_omvs = plt.subplots(figsize=(10, 5))
+            ax_omvs.plot(
+                df_pred_omvs["Année"],
+                y_values,
+                marker="o",
+                markersize=8,
+                linestyle="-",
+                color="green",
+                label="Structures recommandées"
+                
+            )
+            ax_omvs.set_title(f"Structures recommandées par OMS - {region_selected_omvs}")
+            ax_omvs.set_xlabel("Année")
+            ax_omvs.set_ylabel("Nombre de structures")
+            ax_omvs.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            y_max = y_values.max() if len(y_values) > 0 else 1
+            ax_omvs.set_ylim(bottom=0, top=y_max + max(2, int(0.1 * y_max)))
+            ax_omvs.grid()
+            ax_omvs.legend()
+            st.pyplot(fig_omvs)
+            st.dataframe(df_pred_omvs[["Année", "Structures recommandées", "Structures existantes", "À ajouter"]])
+    else:
+        st.warning("Impossible de calculer la recommandation pour cette region.")
