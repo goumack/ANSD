@@ -136,7 +136,7 @@ with tab2:
 
     SEQ_LENGTH2 = 10
     DATA_PATH2 = "couverturedf2.csv"
-    API_URL2 = "https://structurenombre-dgid.apps.ocp.heritage.africa/v2/models/structurenombre/infer"
+    API_URL2 = "https://ansdbis-dgid.apps.ocp.heritage.africa/v2/models/ansdbis/infer"
 
     @st.cache_data
     def load_data_struct():
@@ -227,7 +227,7 @@ with tab3:
 
     SEQ_LENGTH3 = 10
     DATA_PATH3 = "couverturedf1.csv"
-    API_URL3 = "https://temporeans-dgid.apps.ocp.heritage.africa/v2/models/temporeans/infer"
+    API_URL3 = "https://ansdcouvert-dgid.apps.ocp.heritage.africa/v2/models/ansdcouvert/infer"
 
     @st.cache_data
     def load_temporelle_data():
