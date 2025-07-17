@@ -10,9 +10,9 @@ st.set_page_config(page_title="Prévision Régionale", layout="wide")
 # === ENTÊTE AVEC IMAGE ET TITRE ===
 col1, col2 = st.columns([1, 8])
 with col1:
-    st.image("exports logo2_Plan de travail 1.png", width=160)
+    st.image("exports logo2_Plan de travail 1.png", width=170)
 with col2:
-    st.title("Planification: Vers une meilleure couverture sanitaire au Sénégal : État des lieux et perspectives à l’horizon 2030")
+    st.title("Application de planification: Vers une meilleure couverture sanitaire au Sénégal : État des lieux et perspectives à l’horizon 2030")
 
 
 # === ONGLET PRINCIPAL ===
@@ -20,12 +20,14 @@ tab1, tab2, tab3, tab4 = st.tabs([
     " Démographie et population", 
     " Structures sanitaires", 
     " Couverture sanitaires",
-    " Normes de couverture sanitaire OMS(Structures)"
+    " Normes de couverture sanitaire"
 ])
 
 # ==================================================================================
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
 # ==================================================================================
+# ...existing code...
+# ...existing code...
 with tab1:
     st.subheader(" Démographie et population : évolution au Sénégal de 2012 à 2025, avec projections jusqu’en 2030")
     
@@ -43,13 +45,11 @@ with tab1:
     df = load_data()
     regions = sorted(df['region'].unique())
 
-    st.sidebar.header("Filtres Régionaux")
-    default_selection = ["DAKAR"] if "DAKAR" in regions else ([regions[0]] if regions else [])
-    selected_regions = st.sidebar.multiselect("Sélectionnez une ou plusieurs régions", regions, default=default_selection)
-
-    st.sidebar.header("Période de prédiction")
-    start_year = st.sidebar.number_input("Année de début", min_value=2024, max_value=2100, value=2025)
-    end_year = st.sidebar.number_input("Année de fin", min_value=start_year, max_value=2100, value=2030)
+    # Filtres dans la section principale (pas dans la sidebar)
+    region_default = ["DAKAR"] if "DAKAR" in regions else ([regions[0]] if regions else [])
+    selected_regions = st.multiselect("Sélectionnez une ou plusieurs régions", regions, default=region_default, key="region_demo")
+    start_year = st.number_input("Année de début", min_value=2024, max_value=2100, value=2025, key="start_year_demo")
+    end_year = st.number_input("Année de fin", min_value=start_year, max_value=2100, value=2030, key="end_year_demo")
 
     if not selected_regions:
         st.warning("Veuillez sélectionner au moins une région.")
@@ -117,11 +117,10 @@ with tab1:
                 ax.plot(pred_df['Année'], pred_df['Prédiction (valeur)'], marker='x', linestyle='--', label=f"{region} - Prédiction")
         ax.set_xlabel("Année")
         ax.set_ylabel("Valeur")
-        #ax.set_title("Données historiques et prévisions par région")
         ax.grid(True)
         ax.legend()
         st.pyplot(fig)
-
+# ...existing code...# ...existing code...
 # ==================================================================================
 # === TAB 2 : STRUCTURE NOMBRE =====================================================
 # ==================================================================================
@@ -216,6 +215,7 @@ with tab2:
 # ==================================================================================
 # === TAB 3 : PRÉVISION TEMPORELLE ================================================
 # ==================================================================================
+
 with tab3:
     st.subheader(" Couverture sanitaires : tendances de 2018 à 2025 et projections à l’horizon 2030")
 
@@ -291,8 +291,8 @@ with tab3:
             df_pred3 = pd.merge(df_pred3, df_pred_struct_temp[["Année", "Prédiction (valeur)"]], on="Année", how="left", suffixes=("_temp", "_struct"))
             df_pred3["Prédiction (valeur)_struct"] = df_pred3["Prédiction (valeur)_struct"].replace(0, np.nan)  # éviter division par zéro
 
-            # Calculer le ratio
-            df_pred3["Ratio temporelle/structure"] = (df_pred3["Prédiction (valeur)_temp"] / 1).round(2)
+            # Calculer le ratio arrondi à l'excès (entier supérieur)
+            df_pred3["Ratio temporelle/structure"] = np.ceil(df_pred3["Prédiction (valeur)_temp"]).astype(int)
 
             # Tracer uniquement le ratio
             y_ratio = df_pred3["Ratio temporelle/structure"]
@@ -309,10 +309,22 @@ with tab3:
             ax3.set_title(f"Ratio temporelle/structure - {region_selected3}")
             ax3.set_xlabel("Année")
             ax3.set_ylabel("Ratio")
-            ax3.set_ylim(bottom=0, top=max(y_ratio.max(), 1) + 0.5)
             ax3.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
             ax3.grid()
-            ax3.legend()
+            ax3.legend(loc="lower center", bbox_to_anchor=(0.5, -0.25), ncol=2)
+            ax3.margins(x=0.2)
+
+            # Centrage vertical du tracé sur l'axe des ordonnées
+            y_min = y_ratio.min()
+            y_max = y_ratio.max()
+            y_center = (y_max + y_min) / 2
+            y_range = max(y_max - y_min, 1)
+            marge = 0.2 * y_range  # 20% de marge autour du tracé
+            ax3.set_ylim(y_center - y_range/2 - marge, y_center + y_range/2 + marge)
+
+            years = list(df_pred3['Année'])
+            if len(years) > 1:
+                ax3.set_xlim(min(years) - 1, max(years) + 1)
             st.pyplot(fig3)
             st.dataframe(df_pred3[["Année", "Ratio temporelle/structure"]])
     except Exception as e:
