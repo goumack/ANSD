@@ -10,30 +10,24 @@ st.set_page_config(page_title="Prévision Régionale", layout="wide")
 # === ENTÊTE AVEC IMAGE ET TITRE ===
 col1, col2 = st.columns([1, 8])
 with col1:
-    st.image("senegal icone.jpg", width=50)
+    st.image("senegal icone.jpg", width=100)
 with col2:
-    st.title("Application de Prévision par Région")
+    st.title("Application de planification: Vers une meilleure couverture sanitaire au Sénégal : État des lieux et perspectives à l’horizon 2030")
 
-st.markdown(
-    """
-    ### Population & Couverture sanitaire 
-    *ACCEL 2025*
-    """
-)
 
 # === ONGLET PRINCIPAL ===
 tab1, tab2, tab3, tab4 = st.tabs([
-    " Population", 
-    " Nombre d'hopitaux", 
-    " Nombre d'habitant par hopital",
-    " Nombre d'habitant par hopital (Norme OMS)"
+    " Démographie et population", 
+    " Structures sanitaires", 
+    " Couverture sanitaires",
+    " Normes de couverture sanitaire"
 ])
 
 # ==================================================================================
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
 # ==================================================================================
 with tab1:
-    st.subheader("Prévision de la Population par Région")
+    st.subheader(" Démographie et population : évolution au Sénégal de 2012 à 2025, avec projections jusqu’en 2030")
     
     API_URL = "https://ansdpoc1-dgid.apps.ocp.heritage.africa/v2/models/ansdpoc1/infer"
 
@@ -123,7 +117,7 @@ with tab1:
                 ax.plot(pred_df['Année'], pred_df['Prédiction (valeur)'], marker='x', linestyle='--', label=f"{region} - Prédiction")
         ax.set_xlabel("Année")
         ax.set_ylabel("Valeur")
-        ax.set_title("Données historiques et prévisions par région")
+        #ax.set_title("Données historiques et prévisions par région")
         ax.grid(True)
         ax.legend()
         st.pyplot(fig)
@@ -132,7 +126,7 @@ with tab1:
 # === TAB 2 : STRUCTURE NOMBRE =====================================================
 # ==================================================================================
 with tab2:
-    st.subheader(" Nombre d'hopitaux")
+    st.subheader(" Évolution du nombre de structures sanitaires au Sénégal : 2018–2025 et perspectives jusqu’en 2030")
 
     SEQ_LENGTH2 = 10
     DATA_PATH2 = "couverturedf2.csv"
@@ -205,7 +199,7 @@ with tab2:
                 color="tab:blue",
                 label="Prédiction"
             )
-            ax2.set_title(f"Structure nombre - {region_selected2}")
+            ax2.set_title(f"{region_selected2}")
             ax2.set_xlabel("Année")
             ax2.set_ylabel("Valeur")
             ax2.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
@@ -223,16 +217,16 @@ with tab2:
 # === TAB 3 : PRÉVISION TEMPORELLE ================================================
 # ==================================================================================
 with tab3:
-    st.subheader(" Nombre d'habitant par hopital")
+    st.subheader(" Couverture sanitaires : tendances de 2018 à 2025 et projections à l’horizon 2030")
 
     SEQ_LENGTH3 = 10
-    DATA_PATH3 = "couverturedf1.csv"
-    API_URL3 = "https://ansdcouvert-dgid.apps.ocp.heritage.africa/v2/models/ansdcouvert/infer"
+    DATA_PATH3 = "ANSDPOPFINAL4.csv"
+    API_URL3 = "https://ansdpop-dgid.apps.ocp.heritage.africa/v2/models/ansdpop/infer"
 
     @st.cache_data
     def load_temporelle_data():
         df = pd.read_csv(DATA_PATH3, sep=';')
-        df.columns = ['region', 'date', 'value', 'unit', 'indicateur', 'sexe']
+        df.columns = ['region', 'unit', 'date', 'sexe', 'indicateur', 'value']
         df = df[['region', 'date', 'value']]
         df['region'] = df['region'].str.upper().str.strip()
         df = df.sort_values(['region', 'date'])
@@ -286,39 +280,51 @@ with tab3:
         if df_pred3.empty:
             st.info("Aucune prévision possible pour cette région (données insuffisantes).")
         else:
-            y_values_temp = np.ceil(df_pred3['Prédiction (valeur)']).clip(lower=0).astype(int)
+            # Récupérer la prédiction structure nombre pour la même région et années
+            region_df_struct_temp = df_struct[df_struct['region'] == region_selected3]
+            scaler_struct_temp = MinMaxScaler()
+            scaled_struct_temp = scaler_struct_temp.fit_transform(region_df_struct_temp['value'].values.reshape(-1, 1)).flatten()
+            df_pred_struct_temp = predict_struct(scaled_struct_temp, scaler_struct_temp, region_map2[region_selected3])
+            df_pred_struct_temp["Prédiction (valeur)"] = np.ceil(df_pred_struct_temp["Prédiction (valeur)"]).clip(lower=1).astype(int)  # éviter division par zéro
+
+            # Fusionner sur l'année
+            df_pred3 = pd.merge(df_pred3, df_pred_struct_temp[["Année", "Prédiction (valeur)"]], on="Année", how="left", suffixes=("_temp", "_struct"))
+            df_pred3["Prédiction (valeur)_struct"] = df_pred3["Prédiction (valeur)_struct"].replace(0, np.nan)  # éviter division par zéro
+
+            # Calculer le ratio
+            df_pred3["Ratio temporelle/structure"] = (df_pred3["Prédiction (valeur)_temp"] / 1).round(2)
+
+            # Tracer uniquement le ratio
+            y_ratio = df_pred3["Ratio temporelle/structure"]
             fig3, ax3 = plt.subplots(figsize=(10, 5))
             ax3.plot(
                 df_pred3['Année'],
-                y_values_temp,
-                marker="o",
+                y_ratio,
+                marker="s",
                 markersize=8,
                 linestyle="--",
-                color="tab:orange",
-                label="Prédiction"
+                color="tab:green",
+                label="Ratio temporelle/structure"
             )
-            ax3.set_title(f"Prévision temporelle - {region_selected3}")
+            ax3.set_title(f"Ratio temporelle/structure - {region_selected3}")
             ax3.set_xlabel("Année")
-            ax3.set_ylabel("Valeur")
-            ax3.set_ylim(bottom=0, top=y_values_temp.max() + max(2, int(0.1 * y_values_temp.max())))
+            ax3.set_ylabel("Ratio")
+            ax3.set_ylim(bottom=0, top=max(y_ratio.max(), 1) + 0.5)
             ax3.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
             ax3.grid()
             ax3.legend()
             st.pyplot(fig3)
-            df_pred3["Prédiction (valeur)"] = y_values_temp
-            st.dataframe(df_pred3)
+            st.dataframe(df_pred3[["Année", "Ratio temporelle/structure"]])
     except Exception as e:
         st.error(f"Erreur de prédiction : {e}")
-
 # ==================================================================================
 # === TAB 4 : RECOMMANDATION OMVS ==================================================
 # ==================================================================================
 with tab4:
-    st.subheader(" Recommandation OMS")
+    st.subheader(" Normes de couverture sanitaire : recommandations de l’OMS à atteindre à partir de 2025")
     st.markdown("""
         **Méthode :**  
-        Nombre de structures recommandées = Population prédite / 150 000  
-        (selon la norme OMS)
+        Recommandation OMS: 1 hopital pour 150 000 habitants
     """)
 
     region_selected_omvs = st.selectbox(
@@ -375,3 +381,49 @@ with tab4:
             st.dataframe(df_pred_omvs[["Année", "Structures recommandées", "Structures existantes", "À ajouter"]])
     else:
         st.warning("Impossible de calculer la recommandation pour cette region.")
+
+# ==================================================================================
+# === FIN DU SCRIPT ================================================================
+# ...existing code...
+
+    st.markdown("""
+        **Ratio Population / Prévision temporelle**
+    """)
+
+    # Prédiction Population (section 1)
+    _, df_pred_pop = predict_for_region(region_selected_omvs, start=start_year_omvs, end=end_year_omvs)
+    # Prédiction Prévision temporelle (section 3)
+    region_df_temp = df_temp[df_temp['region'] == region_selected_omvs]
+    scaler_temp = MinMaxScaler()
+    scaled_temp = scaler_temp.fit_transform(region_df_temp['value'].values.reshape(-1, 1)).flatten()
+    df_pred_temp = predict_temporelle(scaled_temp, scaler_temp, region_map3[region_selected_omvs])
+
+    if df_pred_pop is not None and not df_pred_temp.empty:
+        # Fusionner sur l'année
+        df_ratio = pd.merge(
+            df_pred_pop[["Année", "Prédiction (valeur)"]],
+            df_pred_temp[["Année", "Prédiction (valeur)"]],
+            on="Année",
+            suffixes=("_pop", "_temp")
+        )
+        df_ratio["Ratio Population/Temporelle"] = (df_ratio["Prédiction (valeur)_pop"] / df_ratio["Prédiction (valeur)_temp"]).round(2)
+
+        fig_ratio, ax_ratio = plt.subplots(figsize=(10, 5))
+        ax_ratio.plot(
+            df_ratio["Année"],
+            df_ratio["Ratio Population/Temporelle"],
+            marker="d",
+            markersize=8,
+            linestyle="--",
+            color="tab:red",
+            label="Ratio Population/Temporelle"
+        )
+        ax_ratio.set_title(f"Ratio Population / Prévision temporelle - {region_selected_omvs}")
+        ax_ratio.set_xlabel("Année")
+        ax_ratio.set_ylabel("Ratio")
+        ax_ratio.grid()
+        ax_ratio.legend()
+        st.pyplot(fig_ratio)
+        st.dataframe(df_ratio[["Année", "Ratio Population/Temporelle"]])
+    else:
+        st.info("Impossible de calculer le ratio Population / Prévision temporelle pour cette région et période.")
