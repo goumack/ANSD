@@ -20,7 +20,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     " Démographie et population", 
     " Structures sanitaires", 
     " Couverture sanitaires",
-    " Normes de couverture sanitaire"
+    " Normes de couverture sanitaire OMS(Structures)"
 ])
 
 # ==================================================================================
