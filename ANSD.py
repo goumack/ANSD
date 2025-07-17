@@ -27,6 +27,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # === TAB 1 : PRÉVISION DE LA POPULATION PAR RÉGION ===============================
 # ==================================================================================
 # ...existing code...
+# ...existing code...
 with tab1:
     st.subheader(" Démographie et population : évolution au Sénégal de 2012 à 2025, avec projections jusqu’en 2030")
     
@@ -44,15 +45,14 @@ with tab1:
     df = load_data()
     regions = sorted(df['region'].unique())
 
-    # SUPPRESSION DU FILTRE REGIONAL
-    selected_regions = regions  # Toutes les régions sont sélectionnées
-
-    st.sidebar.header("Période de prédiction")
-    start_year = st.sidebar.number_input("Année de début", min_value=2024, max_value=2100, value=2025, key="start_year_demo")
-    end_year = st.sidebar.number_input("Année de fin", min_value=start_year, max_value=2100, value=2030, key="end_year_demo")
+    # Filtres dans la section principale (pas dans la sidebar)
+    region_default = ["DAKAR"] if "DAKAR" in regions else ([regions[0]] if regions else [])
+    selected_regions = st.multiselect("Sélectionnez une ou plusieurs régions", regions, default=region_default, key="region_demo")
+    start_year = st.number_input("Année de début", min_value=2024, max_value=2100, value=2025, key="start_year_demo")
+    end_year = st.number_input("Année de fin", min_value=start_year, max_value=2100, value=2030, key="end_year_demo")
 
     if not selected_regions:
-        st.warning("Aucune région disponible dans les données.")
+        st.warning("Veuillez sélectionner au moins une région.")
         st.stop()
 
     def predict_for_region(region_name, start=start_year, end=end_year):
@@ -120,6 +120,8 @@ with tab1:
         ax.grid(True)
         ax.legend()
         st.pyplot(fig)
+# ...existing code...
+
 # ...existing code...
 # ==================================================================================
 # === TAB 2 : STRUCTURE NOMBRE =====================================================
