@@ -10,7 +10,7 @@ st.set_page_config(page_title="Prévision Régionale", layout="wide")
 # === ENTÊTE AVEC IMAGE ET TITRE ===
 col1, col2 = st.columns([1, 8])
 with col1:
-    st.image("senegal icone.jpg", width=100)
+    st.image("exports logo2_Plan de travail 1.png", width=100)
 with col2:
     st.title("Application de planification: Vers une meilleure couverture sanitaire au Sénégal : État des lieux et perspectives à l’horizon 2030")
 
